@@ -1,0 +1,96 @@
+{% extends 'base.html' %}
+
+{% block title %}Manage Sites - Affiliate Publisher{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-header">
+                <h5>Add WordPress Site</h5>
+            </div>
+            <div class="card-body">
+                <form method="post">
+                    {% csrf_token %}
+                    {{ form.as_p }}
+                    <button type="submit" class="btn btn-primary">Add Site</button>
+                </form>
+                <hr>
+                <small class="text-muted">
+                    <strong>Note:</strong> You need to create an Application Password in WordPress:
+                    <ol>
+                        <li>Go to Users → Your Profile in WordPress admin</li>
+                        <li>Scroll to "Application Passwords"</li>
+                        <li>Enter a name and click "Add New"</li>
+                        <li>Copy the generated password here</li>
+                    </ol>
+                </small>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-header">
+                <h5>Your WordPress Sites</h5>
+            </div>
+            <div class="card-body">
+                <div class="list-group">
+                    {% for site in sites %}
+                    <div class="list-group-item">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <div>
+                                <h6 class="mb-1">{{ site.name }}</h6>
+                                <small>{{ site.url }}</small>
+                            </div>
+                            <div>
+                                <button class="btn btn-sm btn-info test-connection" data-site-id="{{ site.id }}">Test</button>
+                                <a href="{% url 'delete_site' site.id %}" class="btn btn-sm btn-danger" onclick="return confirm('Are you sure?')">Delete</a>
+                            </div>
+                        </div>
+                    </div>
+                    {% empty %}
+                    <p class="text-muted">No sites configured yet.</p>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.querySelectorAll('.test-connection').forEach(btn => {
+    btn.addEventListener('click', async function() {
+        const siteId = this.dataset.siteId;
+        this.disabled = true;
+        this.textContent = 'Testing...';
+        
+        try {
+            const response = await fetch(`/sites/${siteId}/test/`);
+            const data = await response.json();
+            
+            if (data.success) {
+                this.className = 'btn btn-sm btn-success';
+                this.textContent = '✓ Connected';
+            } else {
+                this.className = 'btn btn-sm btn-danger';
+                this.textContent = '✗ Failed';
+                alert('Connection failed: ' + data.error);
+            }
+        } catch (error) {
+            this.className = 'btn btn-sm btn-danger';
+            this.textContent = '✗ Error';
+            alert('Test failed: ' + error);
+        }
+        
+        setTimeout(() => {
+            this.className = 'btn btn-sm btn-info test-connection';
+            this.textContent = 'Test';
+            this.disabled = false;
+        }, 3000);
+    });
+});
+</script>
+{% endblock %}

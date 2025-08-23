@@ -1,0 +1,60 @@
+# Python bytecode files
+*.pyc
+__pycache__/
+
+# Django specific
+*.log
+*.pot
+local_settings.py
+db.sqlite3
+media/
+
+# Virtual environments
+.env
+.env.example/
+venv/
+env/
+ENV/
+env.bak/
+venv.bak/
+
+# IDE and editor files
+.idea/
+.vscode/
+*.sublime-workspace
+*.sublime-project
+
+# macOS and Windows file system artifacts
+.DS_Store
+Thumbs.db
+
+# Python packaging
+*.egg-info/
+.eggs/
+*.egg
+pip-log.txt
+pip-delete-this-directory.txt
+
+# Unit test, coverage reports, and tox environments
+htmlcov/
+.tox/
+.coverage
+.coverage.*
+.cache
+.pytest_cache/
+nosetests.xml
+coverage.xml
+*.cover
+
+# Jupyter Notebook checkpoints
+.ipynb_checkpoints
+
+# Miscellaneous
+*.bak
+.history
+
+# Logs and celery
+celerybeat-schedule.*
+
+# pyenv
+.python-version
