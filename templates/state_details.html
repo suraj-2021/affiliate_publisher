@@ -1,0 +1,139 @@
+{% extends 'base.html' %}
+{% load custom_filters %}
+
+{% block title %}Stage {{ stage_id|slice:"5:" }} Details{% endblock %}
+
+{% block content %}
+<style>
+    .stage-header {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        padding: 30px;
+        border-radius: 10px;
+        margin-bottom: 30px;
+    }
+    .best-practice-card {
+        background: #f8f9fa;
+        padding: 15px;
+        border-left: 4px solid #007bff;
+        margin-bottom: 15px;
+    }
+    .post-card {
+        border: 1px solid #e0e0e0;
+        border-radius: 8px;
+        padding: 15px;
+        margin-bottom: 15px;
+        transition: all 0.3s;
+    }
+    .post-card:hover {
+        box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+    }
+    .stats-box {
+        background: white;
+        border: 2px solid #e0e0e0;
+        border-radius: 8px;
+        padding: 20px;
+        text-align: center;
+    }
+</style>
+
+<div class="container-fluid">
+    <div class="stage-header">
+        <h1>{{ stage_info.icon }} {{ stage_info.name }}</h1>
+        <p class="lead mb-0">{{ stage_info.description }}</p>
+    </div>
+    
+    <div class="row">
+        <!-- Stage Statistics -->
+        <div class="col-md-4">
+            <div class="stats-box mb-4">
+                <h3>{{ post_count }}</h3>
+                <p class="text-muted">Total Posts</p>
+            </div>
+            <div class="stats-box mb-4">
+                <h3>{{ total_words|floatformat:0 }}</h3>
+                <p class="text-muted">Total Words</p>
+            </div>
+            <div class="stats-box mb-4">
+                <h3>{{ total_words|divide:post_count|default:0|floatformat:0 }}</h3>
+                <p class="text-muted">Avg Words/Post</p>
+            </div>
+            
+            <!-- Best Practices -->
+            <div class="card">
+                <div class="card-header">
+                    <h5>📋 Best Practices</h5>
+                </div>
+                <div class="card-body">
+                    {% for practice in stage_info.best_practices %}
+                    <div class="best-practice-card">
+                        {{ practice }}
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+        
+        <!-- Posts List -->
+        <div class="col-md-8">
+            <div class="d-flex justify-content-between align-items-center mb-3">
+                <h4>Posts in This Stage</h4>
+                <a href="{% url 'publisher:generate_content' %}?stage={{ stage_id }}" 
+                   class="btn btn-primary">
+                    + Create New {{ stage_info.name|truncatewords:1 }} Post
+                </a>
+            </div>
+            
+            {% for post in posts %}
+            <div class="post-card">
+                <div class="d-flex justify-content-between">
+                    <div>
+                        <h5>{{ post.title }}</h5>
+                        <p class="text-muted mb-2">{{ post.topic }}</p>
+                        <div>
+                            <span class="badge bg-secondary">{{ post.content|wordcount }} words</span>
+                            {% if post.pillar_post %}
+                            <span class="badge bg-primary">Pillar Post</span>
+                            {% endif %}
+                            {% if post.conversion_focused %}
+                            <span class="badge bg-success">Conversion Focused</span>
+                            {% endif %}
+                            <span class="badge bg-info">{{ post.status|title }}</span>
+                        </div>
+                    </div>
+                    <div>
+                        <a href="{% url 'publisher:edit_content' post.pk %}" 
+                           class="btn btn-sm btn-outline-primary">Edit</a>
+                        {% if post.wordpress_url %}
+                        <a href="{{ post.wordpress_url }}" target="_blank" 
+                           class="btn btn-sm btn-outline-success">View</a>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+            {% empty %}
+            <div class="alert alert-info">
+                No posts in this stage yet. 
+                <a href="{% url 'publisher:generate_content' %}?stage={{ stage_id }}">
+                    Create your first {{ stage_info.name|lower }} post
+                </a>
+            </div>
+            {% endfor %}
+            
+            <!-- Example Topics -->
+            <div class="card mt-4">
+                <div class="card-header">
+                    <h5>💡 Example Topics for This Stage</h5>
+                </div>
+                <div class="card-body">
+                    <ul>
+                        {% for example in stage_info.examples %}
+                        <li>{{ example }}</li>
+                        {% endfor %}
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

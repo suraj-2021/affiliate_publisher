@@ -1,7 +1,7 @@
 import os
 from pathlib import Path
 from dotenv import load_dotenv
-
+import json
 load_dotenv()
 
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -22,7 +22,7 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
     'crispy_forms',
     'crispy_bootstrap5',
-    'publisher',
+    'publisher.apps.PublisherConfig',
 ]
 
 MIDDLEWARE = [
@@ -49,6 +49,8 @@ TEMPLATES = [
                 'django.template.context_processors.request',
                 'django.contrib.auth.context_processors.auth',
                 'django.contrib.messages.context_processors.messages',
+                # Add this for stage data
+                'publisher.context_processors.stage_context',
             ],
         },
     },
@@ -56,19 +58,16 @@ TEMPLATES = [
 
 WSGI_APPLICATION = 'affiliate_publisher.wsgi.application'
 
-# Database
-if os.getenv('DATABASE_URL'):
-    import dj_database_url
-    DATABASES = {
-        'default': dj_database_url.parse(os.getenv('DATABASE_URL'))
-    }
-else:
-    DATABASES = {
+DATABASES = {
         'default': {
             'ENGINE': 'django.db.backends.sqlite3',
             'NAME': BASE_DIR / 'db.sqlite3',
         }
     }
+if 'sqlite' in DATABASES['default']['ENGINE']:
+    import sqlite3
+    sqlite3.register_adapter(dict, json.dumps)
+    sqlite3.register_converter("JSON", json.loads)
 
 # Password validation
 AUTH_PASSWORD_VALIDATORS = [
@@ -88,12 +87,33 @@ STATIC_URL = '/static/'
 STATIC_ROOT = os.getenv('STATIC_ROOT', BASE_DIR / 'static_collected')
 STATICFILES_DIRS = [BASE_DIR / 'static'] if os.path.exists(BASE_DIR / 'static') else []
 
-# Media files
+# Media files configuration
 MEDIA_URL = '/media/'
-MEDIA_ROOT = os.getenv('MEDIA_ROOT', BASE_DIR / 'media')
+MEDIA_ROOT = BASE_DIR / 'media'
 
-# Create media directory if it doesn't exist
-os.makedirs(MEDIA_ROOT, exist_ok=True)
+# Create media directories
+MEDIA_UPLOAD_DIRS = [
+    'uploads',
+    'uploads/temp',
+    'uploads/processed'
+]
+
+for directory in MEDIA_UPLOAD_DIRS:
+    os.makedirs(os.path.join(MEDIA_ROOT, directory), exist_ok=True)
+
+# Image processing settings
+IMAGE_MAX_WIDTH = 1920
+IMAGE_MAX_HEIGHT = 1080
+IMAGE_QUALITY = 85
+IMAGE_ALLOWED_EXTENSIONS = ['jpg', 'jpeg', 'png', 'gif', 'webp']
+IMAGE_MAX_SIZE = 5 * 1024 * 1024  # 5MB
+
+# Pillow settings for image optimization
+THUMBNAIL_SIZES = {
+    'small': (300, 300),
+    'medium': (768, 768),
+    'large': (1920, 1920)
+}
 
 # Login
 LOGIN_URL = 'login'

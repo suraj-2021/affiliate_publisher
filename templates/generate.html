@@ -1,56 +1,552 @@
 {% extends 'base.html' %}
-{% load crispy_forms_tags %}
 
-{% block title %}Generate Content - Affiliate Publisher{% endblock %}
+{% block title %}Generate Content - Stage-Based{% endblock %}
 
 {% block content %}
-<div class="row">
-    <div class="col-md-8 mx-auto">
-        <div class="card">
-            <div class="card-header">
-                <h5>Generate Affiliate Content</h5>
+<style>
+    .stage-card {
+        border: 2px solid #e0e0e0;
+        border-radius: 10px;
+        padding: 20px;
+        margin-bottom: 20px;
+        transition: all 0.3s;
+    }
+    .stage-card.active {
+        border-color: #007bff;
+        background: #f0f8ff;
+    }
+    .stage-indicator {
+        display: flex;
+        justify-content: space-between;
+        margin-bottom: 30px;
+    }
+    .stage-step {
+        flex: 1;
+        text-align: center;
+        padding: 10px;
+        background: #f8f9fa;
+        border-radius: 5px;
+        margin: 0 5px;
+        cursor: pointer;
+        transition: all 0.3s;
+    }
+    .stage-step.active {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+    }
+    .stage-step.completed {
+        background: #28a745;
+        color: white;
+    }
+    .guidance-box {
+        background: #fff3cd;
+        border-left: 4px solid #ffc107;
+        padding: 15px;
+        margin: 20px 0;
+        display: none;
+    }
+    .guidance-box.active {
+        display: block;
+    }
+    .stage-metrics {
+        background: #f8f9fa;
+        padding: 15px;
+        border-radius: 8px;
+        margin-bottom: 20px;
+    }
+</style>
+
+<div class="container-fluid">
+    <h2>🚀 Generate Stage-Based Content</h2>
+    
+    <!-- Stage Progress Indicator -->
+    <div class="stage-indicator">
+        <div class="stage-step" data-stage="stage1" onclick="selectStage('stage1')">
+            <strong>Stage 1</strong><br>
+            <small>Foundational Pillars</small>
+            <div class="badge bg-light text-dark mt-1">{{ stage_counts.stage1 }} posts</div>
+        </div>
+        <div class="stage-step" data-stage="stage2" onclick="selectStage('stage2')">
+            <strong>Stage 2</strong><br>
+            <small>Conversion Content</small>
+            <div class="badge bg-light text-dark mt-1">{{ stage_counts.stage2 }} posts</div>
+        </div>
+        <div class="stage-step" data-stage="stage3" onclick="selectStage('stage3')">
+            <strong>Stage 3</strong><br>
+            <small>Supporting Content</small>
+            <div class="badge bg-light text-dark mt-1">{{ stage_counts.stage3 }} posts</div>
+        </div>
+        <div class="stage-step" data-stage="stage4" onclick="selectStage('stage4')">
+            <strong>Stage 4</strong><br>
+            <small>Authority Content</small>
+            <div class="badge bg-light text-dark mt-1">{{ stage_counts.stage4 }} posts</div>
+        </div>
+        <div class="stage-step" data-stage="stage5" onclick="selectStage('stage5')">
+            <strong>Stage 5</strong><br>
+            <small>Ecosystem Expansion</small>
+            <div class="badge bg-light text-dark mt-1">{{ stage_counts.stage5 }} posts</div>
+        </div>
+        <div class="stage-step" data-stage="stage6" onclick="selectStage('stage6')">
+            <strong>Stage 6</strong><br>
+            <small>Brand Building</small>
+            <div class="badge bg-light text-dark mt-1">{{ stage_counts.stage6 }} posts</div>
+        </div>
+    </div>
+    
+ 
+    
+    <!-- Content Generation Form -->
+    <form method="post" enctype="multipart/form-data" id="generateForm">
+        {% csrf_token %}
+        
+        <div class="row">
+            <div class="col-md-8">
+                <div class="card">
+                    <div class="card-header">
+                        <h5>📝 Content Details</h5>
+                    </div>
+                    <div class="card-body">
+                        <!-- Stage Selection -->
+                        <div class="mb-3">
+                            <label class="form-label">Content Stage *</label>
+                            {{ form.content_stage }}
+                            <div id="stage-description" class="form-text mt-2"></div>
+                        </div>
+                        <!-- Add to the form -->
+<div class="card mb-3">
+    <div class="card-header">
+        <h5>📷 Images & Media</h5>
+    </div>
+    <div class="card-body">
+        <!-- Image Upload -->
+        <div class="mb-3">
+            <label class="form-label">Upload Images</label>
+            {{ form.images }}
+            <small class="form-text text-muted">
+                Select multiple images. They will be automatically inserted into your content.
+            </small>
+        </div>
+        
+        <!-- Image Preview Container -->
+        <div id="imagePreview" class="row g-2 mb-3" style="display:none;">
+            <!-- Previews will be added here -->
+        </div>
+        
+        <!-- Image Options -->
+        <div class="row">
+            <div class="col-md-6">
+                <div class="form-check mb-2">
+                    {{ form.auto_insert_images }}
+                    <label class="form-check-label" for="{{ form.auto_insert_images.id_for_label }}">
+                        {{ form.auto_insert_images.label }}
+                    </label>
+                </div>
             </div>
-            <div class="card-body">
-                <form method="post" enctype="multipart/form-data">
-                    {% csrf_token %}
-                    
-                    <div class="mb-3">
-                        <label class="form-label">Topic/Niche *</label>
-                        {{ form.topic }}
-                        <small class="form-text text-muted">The main topic for your affiliate content</small>
-                    </div>
-
-                    <div class="mb-3">
-                        <label class="form-label">Additional Instructions</label>
-                        {{ form.prompt }}
-                        <small class="form-text text-muted">Optional context or specific requirements</small>
-                    </div>
-
-                    <div class="mb-3">
-                        <label class="form-label">Affiliate Links</label>
-                        {{ form.affiliate_links }}
-                        <small class="form-text text-muted">Enter one link per line - they'll be naturally integrated</small>
-                    </div>
-
-                    <div class="mb-3">
-                        <label class="form-label">Images</label>
-                        <input type="file" name="images" class="form-control" multiple accept="image/*">
-                        <small class="form-text text-muted">Upload images to include in your post</small>
-                    </div>
-
-                    <div class="mb-3">
-                        <label class="form-label">WordPress Site *</label>
-                        {{ form.wordpress_site }}
-                        <small class="form-text text-muted">Select where to publish</small>
-                    </div>
-
-                    <div class="d-grid gap-2">
-                        <button type="submit" class="btn btn-primary">Generate & Publish</button>
-                        <a href="{% url 'dashboard' %}" class="btn btn-secondary">Cancel</a>
-                    </div>
-                </form>
+            <div class="col-md-6">
+                <div class="mb-3">
+                    <label class="form-label">{{ form.featured_image_index.label }}</label>
+                    {{ form.featured_image_index }}
+                </div>
             </div>
+        </div>
+        
+        <!-- Alt Text -->
+        <div class="mb-3">
+            <label class="form-label">{{ form.image_alt_text.label }}</label>
+            {{ form.image_alt_text }}
+            <small class="form-text text-muted">{{ form.image_alt_text.help_text }}</small>
         </div>
     </div>
 </div>
+
+<script>
+// Image preview functionality
+document.getElementById('imageUpload').addEventListener('change', function(e) {
+    const preview = document.getElementById('imagePreview');
+    const altTextarea = document.getElementById('imageAltText');
+    preview.innerHTML = '';
+    preview.style.display = 'none';
+    
+    if (e.target.files.length > 0) {
+        preview.style.display = 'flex';
+        let altTexts = [];
+        
+        Array.from(e.target.files).forEach((file, index) => {
+            if (file.type.startsWith('image/')) {
+                const reader = new FileReader();
+                
+                reader.onload = function(e) {
+                    const col = document.createElement('div');
+                    col.className = 'col-md-3 col-sm-6';
+                    
+                    col.innerHTML = `
+                        <div class="card">
+                            <img src="${e.target.result}" class="card-img-top" style="height:150px;object-fit:cover;">
+                            <div class="card-body p-2">
+                                <small class="text-muted">Image ${index + 1}: ${file.name}</small>
+                                ${index === 0 ? '<span class="badge bg-primary ms-2">Featured</span>' : ''}
+                            </div>
+                        </div>
+                    `;
+                    
+                    preview.appendChild(col);
+                };
+                
+                reader.readAsDataURL(file);
+                
+                // Add placeholder alt text
+                altTexts.push(`Image ${index + 1}: ${file.name.replace(/\.[^/.]+$/, '')}`);
+            }
+        });
+        
+        // Update alt text field with suggestions
+        altTextarea.value = altTexts.join('\n');
+    }
+});
+
+// File size validation
+document.getElementById('imageUpload').addEventListener('change', function(e) {
+    const maxSize = 5 * 1024 * 1024; // 5MB
+    const files = Array.from(e.target.files);
+    
+    const oversizedFiles = files.filter(file => file.size > maxSize);
+    
+    if (oversizedFiles.length > 0) {
+        alert(`The following files are too large (max 5MB):\n${oversizedFiles.map(f => f.name).join('\n')}`);
+        e.target.value = ''; // Clear the input
+    }
+});
+</script>
+                        
+                        <!-- Topic -->
+                        <div class="mb-3">
+                            <label class="form-label">Topic/Title *</label>
+                            {{ form.topic }}
+                            <div id="topic-suggestions" class="form-text mt-2"></div>
+                        </div>
+                        
+                        <!-- Word Count -->
+                        <div class="mb-3">
+                            <label class="form-label">Target Word Count</label>
+                            {{ form.word_count }}
+                            <small class="form-text">Recommended: <span id="recommended-words">2500</span> words for this stage</small>
+                        </div>
+                        
+                        <!-- Writing Tone -->
+                        <div>
+                            <label class="form-label">Writing Tone</label>
+                            {{ form.content_style }}
+                            </label>
+                            
+                        </div>
+                        
+                        <!-- Additional Options -->
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="form-check mb-2">
+                                    {{ form.pillar_post }}
+                                    <label class="form-check-label" for="id_pillar_post">
+                                        {{ form.pillar_post.label }}
+                                    </label>
+                                </div>
+                                <div class="form-check mb-2">
+                                    {{ form.conversion_focused }}
+                                    <label class="form-check-label" for="id_conversion_focused">
+                                        {{ form.conversion_focused.label }}
+                                    </label>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="form-check mb-2">
+                                    {{ form.include_comparison_table }}
+                                    <label class="form-check-label" for="id_include_comparison_table">
+                                        {{ form.include_comparison_table.label }}
+                                    </label>
+                                </div>
+                                <div class="form-check mb-2">
+                                    {{ form.include_buyers_guide }}
+                                    <label class="form-check-label" for="id_include_buyers_guide">
+                                        {{ form.include_buyers_guide.label }}
+                                    </label>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Additional Instructions -->
+                        <div class="mb-3">
+                            <label class="form-label">Additional Instructions</label>
+                            {{ form.prompt }}
+                        </div>
+                        
+                        <!-- Affiliate Links -->
+                        <div class="mb-3">
+                            <label class="form-label">Affiliate Links</label>
+                            {{ form.affiliate_links }}
+                        </div>
+                        
+                        <!-- WordPress Site -->
+                        <div class="mb-3">
+                            <label class="form-label">Target WordPress Site *</label>
+                            {{ form.wordpress_site }}
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="col-md-4">
+                <!-- Stage Progress -->
+                <div class="card mb-3">
+                    <div class="card-header">
+                        <h5>📊 Your Progress</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="stage-metrics">
+                            <p><strong>Current Focus:</strong> <span id="current-focus">Stage 1</span></p>
+                            <p><strong>Total Posts:</strong> {{ total_posts }}</p>
+                            <p><strong>This Month:</strong> {{ posts_this_month }}</p>
+                        </div>
+                        
+                        <div class="progress mb-2">
+                            <div class="progress-bar" role="progressbar" 
+                                 style="width: {{ overall_progress }}%">
+                                {{ overall_progress }}% Complete
+                            </div>
+                        </div>
+                        
+                        <small class="text-muted">
+                            Recommendation: Focus on Stage {{ recommended_stage }} next
+                        </small>
+                    </div>
+                </div>
+                
+                <!-- Related Posts -->
+                <div class="card">
+                    <div class="card-header">
+                        <h5>🔗 Related Posts</h5>
+                    </div>
+                    <div class="card-body">
+                        <div id="related-posts-list">
+                            {% for post in related_posts %}
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" 
+                                       name="link_to_posts" value="{{ post.id }}" 
+                                       id="post_{{ post.id }}">
+                                <label class="form-check-label" for="post_{{ post.id }}">
+                                    {{ post.title|truncatechars:30 }}
+                                    <small class="text-muted">(Stage {{ post.content_stage|slice:"5:" }})</small>
+                                </label>
+                            </div>
+                            {% empty %}
+                            <p class="text-muted">No related posts yet</p>
+                            {% endfor %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Submit Buttons -->
+        <div class="mt-3 d-flex justify-content-between">
+            <div>
+                <button type="button" class="btn btn-secondary" onclick="saveDraft()">
+                    💾 Save as Template
+                </button>
+                <button type="button" class="btn btn-info" onclick="loadTemplate()">
+                    📂 Load Template
+                </button>
+            </div>
+            <div>
+                <button type="submit" name="generate_only" class="btn btn-warning">
+                    ✏️ Generate & Edit
+                </button>
+                <button type="submit" name="generate_publish" class="btn btn-primary btn-lg">
+                    🚀 Generate & Publish
+                </button>
+            </div>
+        </div>
+    </form>
+</div>
+
+<script>
+// Stage-specific configurations
+const stageConfigs = {
+    stage1: {
+        wordCount: 3000,
+        description: "Create comprehensive pillar content that establishes authority",
+        topicHints: ["Complete Guide to...", "Everything About...", "Ultimate Resource for..."],
+        promptSuggestion: "Create an authoritative, comprehensive guide covering all aspects."
+    },
+    stage2: {
+        wordCount: 2500,
+        description: "Product reviews and buying guides that drive conversions",
+        topicHints: ["Best ... in 2025", "Product Review:", "... vs ... Comparison"],
+        promptSuggestion: "Include detailed pros/cons, comparison tables, and buying recommendations."
+    },
+    stage3: {
+        wordCount: 1500,
+        description: "Answer specific questions and solve problems",
+        topicHints: ["How to...", "Why Does...", "Fix ... Problem", "What is..."],
+        promptSuggestion: "Provide actionable steps and link to relevant pillar content."
+    },
+    stage4: {
+        wordCount: 2000,
+        description: "Thought leadership and industry analysis",
+        topicHints: ["The Future of...", "Why ... is Changing", "Industry Trends:"],
+        promptSuggestion: "Include data-driven insights and unique perspectives."
+    },
+    stage5: {
+        wordCount: 1500,
+        description: "Niche topics and ecosystem expansion",
+        topicHints: ["... for Beginners", "Budget ...", "Alternative to..."],
+        promptSuggestion: "Target specific audience segments with tailored advice."
+    },
+    stage6: {
+        wordCount: 2000,
+        description: "Brand building and community content",
+        topicHints: ["Exclusive:", "Premium Guide:", "Community Spotlight:"],
+        promptSuggestion: "Focus on brand voice, community engagement, and premium delivery."
+    }
+};
+
+// Update UI based on selected stage
+function updateStageGuidance() {
+    const stage = document.getElementById('id_content_stage').value;
+    const config = stageConfigs[stage];
+    
+    // Hide all guidance boxes
+    document.querySelectorAll('.guidance-box').forEach(box => {
+        box.classList.remove('active');
+    });
+    
+    // Show selected stage guidance
+    document.getElementById(`${stage}-guidance`).classList.add('active');
+    
+    // Update stage indicators
+    document.querySelectorAll('.stage-step').forEach(step => {
+        step.classList.remove('active');
+    });
+    document.querySelector(`[data-stage="${stage}"]`).classList.add('active');
+    
+    // Update form fields
+    document.getElementById('id_word_count').value = config.wordCount;
+    document.getElementById('recommended-words').textContent = config.wordCount;
+    document.getElementById('stage-description').textContent = config.description;
+    
+    // Update topic suggestions
+    const topicInput = document.getElementById('id_topic');
+    document.getElementById('topic-suggestions').innerHTML = 
+        `<strong>Try:</strong> ${config.topicHints.join(', ')}`;
+    
+    // Update prompt placeholder
+    document.getElementById('id_prompt').placeholder = config.promptSuggestion;
+    
+    // Stage-specific defaults
+    if (stage === 'stage1') {
+        document.getElementById('id_pillar_post').checked = true;
+        document.getElementById('id_conversion_focused').checked = false;
+    } else if (stage === 'stage2') {
+        document.getElementById('id_conversion_focused').checked = true;
+        document.getElementById('id_include_comparison_table').checked = true;
+        document.getElementById('id_include_buyers_guide').checked = true;
+    }
+    
+    // Update current focus
+    const stageNames = {
+        stage1: "Foundational Pillars",
+        stage2: "Conversion Content",
+        stage3: "Supporting Content",
+        stage4: "Authority Building",
+        stage5: "Ecosystem Expansion",
+        stage6: "Brand Building"
+    };
+    document.getElementById('current-focus').textContent = stageNames[stage];
+}
+
+// Select stage from indicator
+function selectStage(stage) {
+    document.getElementById('id_content_stage').value = stage;
+    updateStageGuidance();
+}
+
+// Save as template
+function saveDraft() {
+    const formData = new FormData(document.getElementById('generateForm'));
+    const template = {
+        stage: formData.get('content_stage'),
+        topic: formData.get('topic'),
+        prompt: formData.get('prompt'),
+        wordCount: formData.get('word_count'),
+        style: formData.get('content_style')
+    };
+    localStorage.setItem('contentTemplate', JSON.stringify(template));
+    alert('Template saved!');
+}
+
+// Load template
+function loadTemplate() {
+    const template = JSON.parse(localStorage.getItem('contentTemplate') || '{}');
+    if (template.stage) {
+        document.getElementById('id_content_stage').value = template.stage;
+        document.getElementById('id_topic').value = template.topic || '';
+        document.getElementById('id_prompt').value = template.prompt || '';
+        document.getElementById('id_word_count').value = template.wordCount || 2500;
+        document.getElementById('id_content_style').value = template.style || 'authoritative';
+        updateStageGuidance();
+    }
+}
+
+// Fetch related posts
+document.getElementById('id_topic').addEventListener('blur', function() {
+    const topic = this.value;
+    const stage = document.getElementById('id_content_stage').value;
+    if (topic) {
+        fetch("{% url 'publisher:ajax_related_posts' %}", {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': '{{ csrf_token }}'
+            },
+            body: JSON.stringify({topic: topic, stage: stage})
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.related_posts) {
+                updateRelatedPosts(data.related_posts);
+            }
+        });
+    }
+});
+
+// Update related posts list
+function updateRelatedPosts(posts) {
+    const container = document.getElementById('related-posts-list');
+    if (posts.length > 0) {
+        let html = '';
+        posts.forEach(post => {
+            html += `
+                <div class="form-check">
+                    <input class="form-check-input" type="checkbox" 
+                           name="link_to_posts" value="${post.id}" 
+                           id="post_${post.id}">
+                    <label class="form-check-label" for="post_${post.id}">
+                        ${post.title.substring(0, 30)}...
+                        <small class="text-muted">(Stage ${post.stage})</small>
+                    </label>
+                </div>
+            `;
+        });
+        container.innerHTML = html;
+    }
+}
+
+// Init
+document.addEventListener('DOMContentLoaded', function() {
+    selectStage('stage1'); // default load Stage 1
+    {% for stage, count in stage_counts.items %}
+        {% if count >= 5 %}
+            document.querySelector('[data-stage="{{ stage }}"]').classList.add('completed');
+        {% endif %}
+    {% endfor %}
+});
+</script>
 {% endblock %}

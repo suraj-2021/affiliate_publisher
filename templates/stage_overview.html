@@ -1,0 +1,54 @@
+{% extends 'base.html' %}
+{% load custom_filters %}
+{% block title %}Content Strategy Overview{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <h2>📈 Content Strategy Overview</h2>
+    
+    <div class="row">
+        {% for stage_id, info in stage_info.items %}
+        <div class="col-md-4 mb-4">
+            <div class="card h-100">
+                <div class="card-header">
+                    <h5>{{ info.icon }} {{ info.name }}</h5>
+                </div>
+                <div class="card-body">
+                    <p class="text-muted">{{ info.description }}</p>
+                    
+                    <!-- Progress -->
+                    {% with count=stage_progress|get_item:stage_id %}
+                    <div class="progress mb-3">
+                        <div class="progress-bar" style="width: {% widthratio count info.target 100 %}%">
+                            {{ count }}/{{ info.target }}
+                        </div>
+                    </div>
+                    {% endwith %}
+                    
+                    <!-- Recent Posts -->
+                    <h6>Recent Posts:</h6>
+                    <ul class="list-unstyled">
+                        {% for post in posts_by_stage|get_item:stage_id %}
+                        <li>
+                            <small>
+                                <a href="{% url 'publisher:edit_content' post.pk %}">
+                                    {{ post.title|truncatechars:40 }}
+                                </a>
+                            </small>
+                        </li>
+                        {% empty %}
+                        <li><small class="text-muted">No posts yet</small></li>
+                        {% endfor %}
+                    </ul>
+                    
+                    <a href="{% url 'publisher:generate_content' %}?stage={{ stage_id }}" 
+                       class="btn btn-sm btn-primary">
+                        Create {{ info.name|truncatewords:1 }} Content
+                    </a>
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+</div>
+{% endblock %}

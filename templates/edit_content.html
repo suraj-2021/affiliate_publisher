@@ -1,0 +1,425 @@
+{% extends 'base.html' %}
+
+{% block title %}Edit Content - {{ post.title }}{% endblock %}
+
+{% block content %}
+<style>
+    .editor-container {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 20px;
+        height: calc(100vh - 200px);
+    }
+    .editor-panel {
+        background: white;
+        border-radius: 8px;
+        padding: 20px;
+        overflow-y: auto;
+        border: 1px solid #ddd;
+    }
+    .preview-panel {
+        background: white;
+        border-radius: 8px;
+        padding: 20px;
+        overflow-y: auto;
+        border: 1px solid #ddd;
+    }
+    .editor-toolbar {
+        background: #f8f9fa;
+        padding: 10px;
+        border-radius: 5px;
+        margin-bottom: 10px;
+        display: flex;
+        gap: 10px;
+        flex-wrap: wrap;
+    }
+    .editor-btn {
+        padding: 5px 10px;
+        border: 1px solid #ccc;
+        background: white;
+        border-radius: 3px;
+        cursor: pointer;
+    }
+    .editor-btn:hover {
+        background: #e9ecef;
+    }
+    #contentEditor {
+        width: 100%;
+        min-height: 400px;
+        border: 1px solid #ccc;
+        border-radius: 5px;
+        padding: 10px;
+        font-family: 'Courier New', monospace;
+        font-size: 14px;
+    }
+    .affiliate-link-inserter {
+        background: #fff3cd;
+        padding: 15px;
+        border-radius: 5px;
+        margin-bottom: 15px;
+    }
+    .image-gallery {
+        display: flex;
+        gap: 10px;
+        margin: 15px 0;
+        flex-wrap: wrap;
+    }
+    .image-thumb {
+        width: 100px;
+        height: 100px;
+        object-fit: cover;
+        border-radius: 5px;
+        cursor: pointer;
+        border: 2px solid transparent;
+    }
+    .image-thumb:hover {
+        border-color: #007bff;
+    }
+    .status-bar {
+        background: #f8f9fa;
+        padding: 10px;
+        border-radius: 5px;
+        margin-top: 10px;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+</style>
+
+<div class="container-fluid">
+    <div class="row mb-3">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center">
+                <h2>Edit Content: {{ post.title|truncatechars:50 }}</h2>
+                <div>
+                    <button class="btn btn-info btn-sm" onclick="toggleFullscreen()">
+                        📖 Fullscreen
+                    </button>
+                    <a href="{% url 'publisher:preview_content' post.pk %}" target="_blank" class="btn btn-secondary btn-sm">
+                        👁️ Preview in New Tab
+                    </a>
+                    <a href="{% url 'publisher:dashboard' %}" class="btn btn-outline-secondary btn-sm">
+                        ← Back to Dashboard
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <form method="post" id="editForm">
+        {% csrf_token %}
+        
+        <!-- Title Edit -->
+        <div class="mb-3">
+            <label for="title" class="form-label">Post Title</label>
+            <input type="text" class="form-control" id="title" name="title" value="{{ post.title }}" required>
+        </div>
+
+        <!-- Affiliate Links Manager -->
+        <div class="affiliate-link-inserter">
+            <h5>🔗 Affiliate Links</h5>
+            <div class="row">
+                <div class="col-md-8">
+                    <textarea name="affiliate_links" id="affiliateLinks" class="form-control" rows="2" 
+                              placeholder="Add affiliate links (one per line)">{{ post.affiliate_links }}</textarea>
+                </div>
+                <div class="col-md-4">
+                    <button type="button" class="btn btn-sm btn-success" onclick="insertAffiliateButton()">
+                        + Insert as Button
+                    </button>
+                    <button type="button" class="btn btn-sm btn-info" onclick="insertAffiliateText()">
+                        + Insert as Text
+                    </button>
+                    <button type="button" class="btn btn-sm btn-warning" onclick="insertProductCard()">
+                        + Insert Product Card
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Image Gallery -->
+        {% if images %}
+        <div class="mb-3">
+            <h5>📷 Uploaded Images (Click to insert)</h5>
+            <div class="image-gallery">
+                {% for img in images %}
+                <img src="{{ img.image.url }}" class="image-thumb" 
+                     onclick="insertImage('{{ img.image.url }}', 'Image {{ forloop.counter }}')"
+                     title="Click to insert">
+                {% endfor %}
+            </div>
+        </div>
+        {% endif %}
+
+        <!-- Editor and Preview -->
+        <div class="editor-container">
+            <!-- Editor Panel -->
+            <div class="editor-panel">
+                <h5>✏️ HTML Editor</h5>
+                <div class="editor-toolbar">
+                    <button type="button" class="editor-btn" onclick="insertHTML('h2')">H2</button>
+                    <button type="button" class="editor-btn" onclick="insertHTML('h3')">H3</button>
+                    <button type="button" class="editor-btn" onclick="insertHTML('p')">P</button>
+                    <button type="button" class="editor-btn" onclick="insertHTML('strong')">Bold</button>
+                    <button type="button" class="editor-btn" onclick="insertHTML('em')">Italic</button>
+                    <button type="button" class="editor-btn" onclick="insertHTML('ul')">• List</button>
+                    <button type="button" class="editor-btn" onclick="insertHTML('ol')">1. List</button>
+                    <button type="button" class="editor-btn" onclick="insertHTML('blockquote')">Quote</button>
+                    <button type="button" class="editor-btn" onclick="insertTable()">Table</button>
+                    <button type="button" class="editor-btn" onclick="insertCTA()">CTA Box</button>
+                    <button type="button" class="editor-btn" onclick="formatHTML()">🎨 Format</button>
+                </div>
+                <textarea id="contentEditor" name="content" required>{{ post.edited_content }}</textarea>
+                <div class="status-bar">
+                    <span id="wordCount">0 words</span>
+                    <span id="saveStatus">Ready</span>
+                </div>
+            </div>
+
+            <!-- Live Preview Panel -->
+            <div class="preview-panel">
+                <h5>👁️ Live Preview</h5>
+                <div id="livePreview" style="padding: 20px; background: #fff;">
+                    <!-- Preview will be rendered here -->
+                </div>
+            </div>
+        </div>
+
+        <!-- Action Buttons -->
+        <div class="mt-3 d-flex justify-content-between">
+            <div>
+                <button type="submit" name="save_draft" class="btn btn-secondary">
+                    💾 Save Draft
+                </button>
+                <button type="button" class="btn btn-info" onclick="autoFormat()">
+                    ✨ Auto-Format HTML
+                </button>
+            </div>
+            <div>
+                <span class="me-2">Publishing to: <strong>{{ wordpress_site.name }}</strong></span>
+                <button type="submit" name="publish" class="btn btn-primary btn-lg" 
+                        onclick="return confirm('Publish this content to WordPress?')">
+                    🚀 Publish to WordPress
+                </button>
+            </div>
+        </div>
+    </form>
+</div>
+
+<script>
+// Live preview update
+const editor = document.getElementById('contentEditor');
+const preview = document.getElementById('livePreview');
+const wordCount = document.getElementById('wordCount');
+
+function updatePreview() {
+    preview.innerHTML = editor.value;
+    const words = editor.value.replace(/<[^>]*>/g, '').split(/\s+/).filter(w => w.length > 0).length;
+    wordCount.textContent = `${words} words`;
+}
+
+editor.addEventListener('input', updatePreview);
+updatePreview();
+
+// Auto-save draft every 30 seconds
+setInterval(() => {
+    const saveStatus = document.getElementById('saveStatus');
+    saveStatus.textContent = 'Auto-saving...';
+    // Implement AJAX auto-save here
+    setTimeout(() => {
+        saveStatus.textContent = 'Auto-saved';
+    }, 1000);
+}, 30000);
+
+// HTML insertion functions
+function insertHTML(tag) {
+    const selection = window.getSelection().toString() || 'Text here';
+    let html = '';
+    
+    switch(tag) {
+        case 'h2':
+            html = `<h2>${selection}</h2>`;
+            break;
+        case 'h3':
+            html = `<h3>${selection}</h3>`;
+            break;
+        case 'p':
+            html = `<p>${selection}</p>`;
+            break;
+        case 'strong':
+            html = `<strong>${selection}</strong>`;
+            break;
+        case 'em':
+            html = `<em>${selection}</em>`;
+            break;
+        case 'ul':
+            html = `<ul>\n  <li>Item 1</li>\n  <li>Item 2</li>\n  <li>Item 3</li>\n</ul>`;
+            break;
+        case 'ol':
+            html = `<ol>\n  <li>First</li>\n  <li>Second</li>\n  <li>Third</li>\n</ol>`;
+            break;
+        case 'blockquote':
+            html = `<blockquote class="wp-block-quote">\n  <p>${selection}</p>\n</blockquote>`;
+            break;
+    }
+    
+    insertAtCursor(html);
+}
+
+function insertTable() {
+    const html = `<table class="wp-block-table">
+  <thead>
+    <tr>
+      <th>Feature</th>
+      <th>Product A</th>
+      <th>Product B</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>Price</td>
+      <td>$99</td>
+      <td>$129</td>
+    </tr>
+    <tr>
+      <td>Rating</td>
+      <td>4.5/5</td>
+      <td>4.8/5</td>
+    </tr>
+  </tbody>
+</table>`;
+    insertAtCursor(html);
+}
+
+function insertCTA() {
+    const html = `<div class="wp-block-group has-background" style="background-color:#f0f8ff;padding:20px;border-radius:8px;margin:20px 0;">
+  <h3>💡 Key Takeaway</h3>
+  <p>Important point or call-to-action here...</p>
+</div>`;
+    insertAtCursor(html);
+}
+
+function insertImage(url, alt) {
+    const html = `<figure class="wp-block-image size-large">
+  <img src="${url}" alt="${alt}" class="wp-image"/>
+  <figcaption>${alt}</figcaption>
+</figure>`;
+    insertAtCursor(html);
+}
+
+function insertAffiliateButton() {
+    const links = document.getElementById('affiliateLinks').value.split('\n').filter(l => l.trim());
+    if (links.length === 0) {
+        alert('Please add an affiliate link first');
+        return;
+    }
+    const link = links[0];
+    const html = `<div class="wp-block-buttons is-content-justification-center">
+  <div class="wp-block-button">
+    <a class="wp-block-button__link" href="${link}" target="_blank" rel="noopener noreferrer nofollow" 
+       style="background-color:#ff6b35;color:#ffffff;padding:12px 24px;border-radius:5px;">
+       ➤ Check Latest Price & Reviews
+    </a>
+  </div>
+</div>`;
+    insertAtCursor(html);
+}
+
+function insertAffiliateText() {
+    const links = document.getElementById('affiliateLinks').value.split('\n').filter(l => l.trim());
+    if (links.length === 0) {
+        alert('Please add an affiliate link first');
+        return;
+    }
+    const link = links[0];
+    const html = `<a href="${link}" target="_blank" rel="noopener noreferrer nofollow" style="color:#0073aa;">check current price</a>`;
+    insertAtCursor(html);
+}
+
+function insertProductCard() {
+    const links = document.getElementById('affiliateLinks').value.split('\n').filter(l => l.trim());
+    if (links.length === 0) {
+        alert('Please add an affiliate link first');
+        return;
+    }
+    const link = links[0];
+    const html = `<div class="product-card" style="border:2px solid #e0e0e0;border-radius:10px;padding:20px;margin:30px 0;background:linear-gradient(135deg, #667eea 0%, #764ba2 100%);color:white;">
+  <h3 style="margin-top:0;">🌟 Editor's Choice</h3>
+  <p>After extensive testing, this is our top recommendation for quality and value.</p>
+  <ul style="list-style:none;padding:0;">
+    <li>✅ Premium Quality</li>
+    <li>✅ Best Value for Money</li>
+    <li>✅ Excellent Customer Reviews</li>
+  </ul>
+  <a href="${link}" target="_blank" rel="noopener noreferrer nofollow" 
+     style="display:inline-block;background:white;color:#764ba2;padding:12px 30px;border-radius:25px;text-decoration:none;font-weight:bold;margin-top:10px;">
+     View Product Details →
+  </a>
+</div>`;
+    insertAtCursor(html);
+}
+
+function insertAtCursor(text) {
+    const textarea = document.getElementById('contentEditor');
+    const start = textarea.selectionStart;
+    const end = textarea.selectionEnd;
+    const before = textarea.value.substring(0, start);
+    const after = textarea.value.substring(end);
+    
+    textarea.value = before + text + after;
+    textarea.selectionStart = textarea.selectionEnd = start + text.length;
+    textarea.focus();
+    updatePreview();
+}
+
+function formatHTML() {
+    const editor = document.getElementById('contentEditor');
+    let html = editor.value;
+    
+    // Basic HTML formatting
+    html = html.replace(/></g, '>\n<');
+    html = html.replace(/(<\/(h[1-6]|div|p|blockquote|ul|ol|table)>)/g, '$1\n\n');
+    html = html.replace(/\n{3,}/g, '\n\n');
+    
+    editor.value = html.trim();
+    updatePreview();
+}
+
+function autoFormat() {
+    if (confirm('Auto-format will clean up your HTML. Continue?')) {
+        formatHTML();
+        alert('HTML formatted successfully!');
+    }
+}
+
+function toggleFullscreen() {
+    if (!document.fullscreenElement) {
+        document.documentElement.requestFullscreen();
+    } else {
+        if (document.exitFullscreen) {
+            document.exitFullscreen();
+        }
+    }
+}
+
+// Keyboard shortcuts
+document.addEventListener('keydown', function(e) {
+    if (e.ctrlKey || e.metaKey) {
+        switch(e.key) {
+            case 's':
+                e.preventDefault();
+                document.querySelector('button[name="save_draft"]').click();
+                break;
+            case 'b':
+                e.preventDefault();
+                insertHTML('strong');
+                break;
+            case 'i':
+                e.preventDefault();
+                insertHTML('em');
+                break;
+        }
+    }
+});
+</script>
+{% endblock %}

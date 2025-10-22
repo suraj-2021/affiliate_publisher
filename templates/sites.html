@@ -45,7 +45,7 @@
                             </div>
                             <div>
                                 <button class="btn btn-sm btn-info test-connection" data-site-id="{{ site.id }}">Test</button>
-                                <a href="{% url 'delete_site' site.id %}" class="btn btn-sm btn-danger" onclick="return confirm('Are you sure?')">Delete</a>
+                                <a href="{% url 'publisher:delete_site' site.id %}" class="btn btn-sm btn-danger" onclick="return confirm('Are you sure?')">Delete</a>
                             </div>
                         </div>
                     </div>

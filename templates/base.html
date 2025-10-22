@@ -14,19 +14,58 @@
     </style>
 </head>
 <body>
-    <nav class="navbar navbar-dark navbar-expand-lg mb-4">
+    
+<nav class="navbar navbar-dark navbar-expand-lg mb-4">
+        <!-- Add to navbar -->
+<li class="nav-item dropdown">
+    <a class="nav-link dropdown-toggle" href="#" id="stageDropdown" role="button" 
+       data-bs-toggle="dropdown" aria-expanded="false">
+        📊 Content Stages
+    </a>
+    <ul class="dropdown-menu" aria-labelledby="stageDropdown">
+        <li><a class="dropdown-item" href="{% url 'publisher:stage_overview' %}">
+            📈 Overview
+        </a>
+    </li>
+
+        <li><hr class="dropdown-divider"></li>
+        <li><a class="dropdown-item" href="{% url 'publisher:generate_content' %}?stage=stage1">
+            📚 Stage 1: Pillars
+        </a></li>
+        <li><a class="dropdown-item" href="{% url 'publisher:generate_content' %}?stage=stage2">
+            💰 Stage 2: Conversion
+        </a></li>
+        <li><a class="dropdown-item" href="{% url 'publisher:generate_content' %}?stage=stage3">
+            🔍 Stage 3: Supporting
+        </a></li>
+        <li><a class="dropdown-item" href="{% url 'publisher:generate_content' %}?stage=stage4">
+            🏆 Stage 4: Authority
+        </a></li>
+        <li><a class="dropdown-item" href="{% url 'publisher:generate_content' %}?stage=stage5">
+            🌐 Stage 5: Ecosystem
+        </a></li>
+        <li><a class="dropdown-item" href="{% url 'publisher:generate_content' %}?stage=stage6">
+            🚀 Stage 6: Brand
+        </a></li>
+    </ul>
+</li>
         <div class="container">
-            <a class="navbar-brand" href="{% url 'dashboard' %}">📝 Affiliate Publisher</a>
+            <a class="navbar-brand" href="{% url 'publisher:dashboard' %}">📝 Affiliate Publisher</a>
             {% if user.is_authenticated %}
             <div class="navbar-nav ms-auto">
-                <a class="nav-link" href="{% url 'dashboard' %}">Dashboard</a>
-                <a class="nav-link" href="{% url 'generate_content' %}">Generate</a>
-                <a class="nav-link" href="{% url 'manage_sites' %}">Sites</a>
-                <a class="nav-link" href="{% url 'logout' %}">Logout ({{ user.username }})</a>
+                
+                <a class="nav-link" href="{% url 'publisher:manage_internal_links' %}">Internal Links</a>
+                <a class="nav-link" href="{% url 'publisher:dashboard' %}">Dashboard</a>
+                <a class="nav-link" href="{% url 'publisher:generate_content' %}stage=stage1">Generate</a>
+                <a class="nav-link" href="{% url 'publisher:manage_sites' %}">Sites</a>
+                <a class="nav-link" href="{% url 'publisher:manage_internal_links' %}">Manage Internl Links</a>
+                <a class="nav-link" href="{% url 'publisher:logout' %}">Logout ({{ user.username }})</a>
             </div>
             {% endif %}
         </div>
     </nav>
+
+    
 
     <div class="container">
         {% if messages %}

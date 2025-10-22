@@ -1,0 +1,115 @@
+{% extends 'base.html' %}
+{% load crispy_forms_tags %}
+
+{% block title %}Generate Content - Affiliate Publisher{% endblock %}
+
+{% block content %}
+<!-- Add JavaScript for fetching suggestions -->
+<script>
+    document.getElementById('topic').addEventListener('blur', function() {
+        fetch("{% url 'publisher:ajax_link_suggestions' %}", {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': '{{ csrf_token }}'
+            },
+            body: JSON.stringify({
+                topic: this.value,
+                content: document.getElementById('prompt').value
+            })
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.related_posts && data.related_posts.length > 0) {
+                console.log('Found related posts:', data.related_posts);
+                // Display suggestions to user
+            }
+        });
+    });
+    </script>
+<div class="row">
+    <div class="col-md-8 mx-auto">
+        <div class="card shadow-sm">
+            <div class="card-header">
+                <h5>Generate Affiliate Content</h5>
+            </div>
+            <div class="card-body">
+                <form method="post" enctype="multipart/form-data">
+                    {% csrf_token %}
+                    
+                    <!-- Topic -->
+                    <div class="mb-3">
+                        <label class="form-label">Topic/Niche *</label>
+                        {{ form.topic }}
+                        <small class="form-text text-muted">
+                            The main topic for your affiliate content
+                        </small>
+                    </div>
+                    <div class="form-check mb-3">
+                        <input type="checkbox" class="form-check-input" name="include_internal_links" 
+                               id="includeInternalLinks" checked>
+                        <label class="form-check-label" for="includeInternalLinks">
+                            Automatically add internal links to related content
+                        </label>
+                    </div>                    
+
+                    <!-- Additional Instructions -->
+                    <div class="mb-3">
+                        <label class="form-label">Additional Instructions (Optional)</label>
+                        {{ form.prompt }}
+                        <small class="form-text text-muted d-block mt-2">
+                            Use this field to fine-tune how the content is written.  
+                            You can include any of the following (one or many):  
+                            <ul class="mb-1">
+                                <li><strong>Target audience</strong> — e.g., beginners, experts, parents, college students.</li>
+                                <li><strong>Tone & Style</strong> — conversational, professional, humorous, storytelling, formal.</li>
+                                <li><strong>Content angle</strong> — product comparison, step-by-step guide, listicle, review.</li>
+                                <li><strong>Key points to include</strong> — pros/cons, price ranges, durability, mistakes to avoid.</li>
+                                <li><strong>SEO Keywords</strong> — list keywords to naturally include for search ranking.</li>
+                                <li><strong>Extra elements</strong> — FAQs, checklist, summary table, call-to-action.</li>
+                                <li><strong>Variation tips</strong> — ask for different styles across posts so content doesn’t feel repetitive.</li>
+                            </ul>
+                            <em>Example:</em> "Target audience: first-time DSLR buyers. Style: friendly storytelling. Angle: budget under $700. Include comparisons + common beginner mistakes."
+                        </small>
+                    </div>
+
+
+                    <!-- Affiliate Links -->
+                    <div class="mb-3">
+                        <label class="form-label">Affiliate Links</label>
+                        {{ form.affiliate_links }}
+                        <small class="form-text text-muted">
+                            Enter one link per line — they'll be naturally integrated
+                        </small>
+                    </div>
+
+                    <!-- Images -->
+                    <div class="mb-3">
+                        <label class="form-label">Images</label>
+                        {{ form.images }}
+                        <small class="form-text text-muted">
+                            Upload images to include in your post
+                        </small>
+                    </div>
+
+                    <!-- WordPress Site -->
+                    <div class="mb-3">
+                        <label class="form-label">WordPress Site *</label>
+                        {{ form.wordpress_site }}
+                        <small class="form-text text-muted">
+                            Select where to publish
+                        </small>
+                    </div>
+
+                    <!-- Buttons -->
+                    <div class="d-grid gap-2">
+                        <button type="submit" class="btn btn-primary">Generate & Review</button>
+                        <a href="{% url 'publisher:dashboard' %}" class="btn btn-secondary">Cancel</a>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% endblock %}
